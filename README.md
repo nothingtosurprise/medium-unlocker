@@ -46,6 +46,8 @@
 - **Inline resolver** – Performs the same URL normalization on-device, then loads freedium in a hardened WebView.
 - **Mirror Support** – Automatically switches to `freedium-mirror.cfd` if the primary server is blocked.
 - **Smart Auto-Retry** – Seamlessly detects connection failures and retries with the mirror server.
+- **Copy as Markdown** – Copies the whole article to your clipboard as markdown, headings, code blocks and images intact.
+- **Hide Site Popups** – Optional setting that suppresses the mirror site’s announcement toasts while you read.
 - **Network extras** – Optional DoH, proxy toggles, custom SSL pinning for freedium’s cert chain.
 
 ---

@@ -27,6 +27,12 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_copy_markdown"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Copy as Markdown"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_share"
         android:icon="@android:drawable/ic_menu_share"
         android:title="Share"

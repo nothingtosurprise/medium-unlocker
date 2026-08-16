@@ -20,6 +20,7 @@ public class SettingsActivity extends AppCompatActivity {
     static final String PREF_TEXT_ZOOM = "text_zoom";
     static final String PREF_REMEMBER_POSITION = "remember_position";
     static final String PREF_NEW_WINDOW = "new_window";
+    static final String PREF_HIDE_POPUPS = "hide_popups";
     static final String PREF_MAX_HISTORY = "max_history";
     static final String PREF_HOME_FEED = "home_feed";
     static final String PREF_MIRROR = "mirror";
@@ -44,6 +45,7 @@ public class SettingsActivity extends AppCompatActivity {
     private TextView textZoomValue;
     private SwitchMaterial rememberPositionSwitch;
     private SwitchMaterial newWindowSwitch;
+    private SwitchMaterial hidePopupsSwitch;
     private TextInputEditText maxHistoryInput;
     private TextView homeFeedValue;
     private TextView mirrorValue;
@@ -69,6 +71,7 @@ public class SettingsActivity extends AppCompatActivity {
         textZoomValue = findViewById(R.id.textZoomValue);
         rememberPositionSwitch = findViewById(R.id.rememberPositionSwitch);
         newWindowSwitch = findViewById(R.id.newWindowSwitch);
+        hidePopupsSwitch = findViewById(R.id.hidePopupsSwitch);
         maxHistoryInput = findViewById(R.id.maxHistoryInput);
         homeFeedValue = findViewById(R.id.homeFeedValue);
         mirrorValue = findViewById(R.id.mirrorValue);
@@ -141,6 +144,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         rememberPositionSwitch.setChecked(prefs.getBoolean(PREF_REMEMBER_POSITION, true));
         newWindowSwitch.setChecked(prefs.getBoolean(PREF_NEW_WINDOW, false));
+        hidePopupsSwitch.setChecked(prefs.getBoolean(PREF_HIDE_POPUPS, false));
 
         int maxHistory = prefs.getInt(PREF_MAX_HISTORY, 100);
         maxHistoryInput.setText(String.valueOf(maxHistory));
@@ -180,6 +184,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .putInt(PREF_TEXT_ZOOM, textZoomSeekBar.getProgress() + 50)
                 .putBoolean(PREF_REMEMBER_POSITION, rememberPositionSwitch.isChecked())
                 .putBoolean(PREF_NEW_WINDOW, newWindowSwitch.isChecked())
+                .putBoolean(PREF_HIDE_POPUPS, hidePopupsSwitch.isChecked())
                 .putInt(PREF_MAX_HISTORY, maxHistory)
                 .putString(PREF_HOME_FEED, selectedFeed)
                 .putString(PREF_MIRROR, selectedMirror)

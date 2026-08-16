@@ -1,6 +1,8 @@
 package com.inulute.mediumunlocker;
 
 import android.app.Dialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -28,6 +30,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONException;
+import org.json.JSONTokener;
+
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -38,6 +43,16 @@ public class WebViewActivity extends AppCompatActivity {
     private static final String TAG = "WebViewActivity";
     private static final String PREFS_NAME = "MediumUnlockerPrefs";
     private static final String PREF_WEBVIEW_POPUP_SHOWN_VERSION = "webview_popup_shown_version";
+
+    private static final String POPUP_BLOCKER_JS =
+            "(function(){" +
+            "var id='mu-hide-popups';" +
+            "if(!document.documentElement||document.getElementById(id))return;" +
+            "var s=document.createElement('style');" +
+            "s.id=id;" +
+            "s.textContent='[data-sonner-toaster],[data-sonner-toast]{display:none !important;}';" +
+            "document.documentElement.appendChild(s);" +
+            "})();";
 
     private static final String[] MIRROR_BASES = {
         "https://freedium-mirror.cfd/",
@@ -124,6 +139,17 @@ public class WebViewActivity extends AppCompatActivity {
                 .getBoolean(SettingsActivity.PREF_REMEMBER_POSITION, true);
     }
 
+    private boolean hidePopups() {
+        return getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getBoolean(SettingsActivity.PREF_HIDE_POPUPS, false);
+    }
+
+    /** Injects a stylesheet that hides the mirror's toast notifications. Idempotent per page. */
+    private void injectPopupBlocker() {
+        if (webView == null || !hidePopups()) return;
+        webView.evaluateJavascript(POPUP_BLOCKER_JS, null);
+    }
+
     private void showUpdateDialogIfNeeded() {
         Intent intent = getIntent();
         String updateVersion = intent != null ? intent.getStringExtra("update_version") : null;
@@ -182,6 +208,7 @@ public class WebViewActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.action_bookmark) { toggleBookmark(); return true; }
             else if (id == R.id.action_forward) { webView.goForward(); return true; }
+            else if (id == R.id.action_copy_markdown) { copyAsMarkdown(); return true; }
             else if (id == R.id.action_open_browser) { openInBrowser(); return true; }
             else if (id == R.id.action_share) { shareArticle(); return true; }
             else if (id == R.id.action_refresh) { webView.reload(); return true; }
@@ -256,6 +283,7 @@ public class WebViewActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 hideLoading();
+                injectPopupBlocker();
                 if (loadingOverlay != null) loadingOverlay.setVisibility(View.GONE);
 
                 String title = view.getTitle();
@@ -338,6 +366,7 @@ public class WebViewActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 progressBar.setProgress(newProgress);
+                if (newProgress > 0) injectPopupBlocker();
                 if (newProgress == 100) hideLoading();
             }
 
@@ -448,6 +477,55 @@ public class WebViewActivity extends AppCompatActivity {
     private void openInBrowser() {
         String url = webView.getUrl() != null ? webView.getUrl() : currentUrl;
         if (url != null) startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+    }
+
+    /** Extracts the rendered article as markdown and puts it on the clipboard. */
+    private void copyAsMarkdown() {
+        if (webView == null) return;
+        String script = readRawResource(R.raw.copy_markdown);
+        if (script == null) {
+            Toast.makeText(this, "Couldn't read article text", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        webView.evaluateJavascript(script, value -> {
+            String markdown = null;
+            try {
+                Object parsed = new JSONTokener(value).nextValue();
+                if (parsed instanceof String) markdown = (String) parsed;
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to decode extracted markdown", e);
+            }
+            if (markdown == null || markdown.trim().isEmpty()) {
+                Toast.makeText(this, "Couldn't read article text", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (originalUrl != null && !originalUrl.isEmpty()) {
+                markdown = markdown + "\n\n---\n\nSource: " + originalUrl + "\n";
+            }
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            if (clipboard == null) {
+                Toast.makeText(this, "Clipboard unavailable", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            clipboard.setPrimaryClip(ClipData.newPlainText("Article markdown", markdown));
+            // Android 13+ shows its own copy confirmation, so don't double up.
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+                Toast.makeText(this, "Copied as Markdown", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private String readRawResource(int resId) {
+        try (java.io.InputStream in = getResources().openRawResource(resId);
+             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+            return out.toString("UTF-8");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to read raw resource", e);
+            return null;
+        }
     }
 
     private void shareArticle() {

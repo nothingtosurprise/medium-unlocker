@@ -1,3 +1,28 @@
+# v2.2 (2026-08-16)
+
+---
+
+<div align='center'>
+
+<img src=./assets/medium_unlock_logo.svg width='150px'>
+
+</div>
+
+---
+
+## Features
+
+### Hide Site Popups (closes #6)
+- **New setting** – Settings → Reader now has a *Hide Site Popups* toggle that suppresses the announcement toasts the mirror site shows over articles ("Freedium has been updated!", "7 new sources supported!", and similar).
+- **Off by default** – Nothing changes until you turn it on, and the setting applies immediately on the next article load.
+
+### Copy as Markdown (closes #7)
+- **New menu option** – The article's three-dot menu now has *Copy as Markdown*, which puts the whole article on your clipboard as markdown instead of making you select the text by hand.
+- **Structure is preserved** – Headings, paragraphs, lists, tables, block quotes, fenced code blocks with language tags, links and images all carry over, with the original Medium URL appended as a `Source:` line.
+- **Works on every mirror** – The article is read from the rendered page rather than any one site's internals, so it works on Freedium and the Archive.is mirrors alike.
+
+---
+
 # v2.1.2 (2026-06-03)
 
 ---
